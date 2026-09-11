@@ -7,6 +7,9 @@ public class Epreuve {
     private String nom;
     private List<Athlete> participants;
 
+    public Epreuve() {
+    }
+
     public Epreuve(int id, String nom, List<Athlete> participants) {
         this.id = id;
         this.nom = nom;
