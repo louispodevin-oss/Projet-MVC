@@ -84,8 +84,14 @@ public class ServletEpreuve extends HttpServlet {
         // Récup et affichage les athletes
         if(url.equals("/la2028_war/ServletEpreuve/lister"))
         {
-            ArrayList<Epreuve> lesAthletes = DaoEpreuve.getLesEpreuves(cnx);
-            request.setAttribute("pLesEpreuve", lesAthletes);
+            System.out.println("ioewhfiiiiiiiiihfiuewhoiuehrogehgiurehgiurehgiurehgrehgjnvinreiuvneiur------------------------");
+            ArrayList<Epreuve> lesEpreuves = DaoEpreuve.getLesEpreuves(cnx);
+
+            System.out.println("------------------");
+            System.out.println(lesEpreuves.get(0).getNom());
+            System.out.println("------------------");
+
+            request.setAttribute("pLesEpreuve", lesEpreuves);
             //System.out.println("lister eleves - nombres d'élèves récupérés" + lesEleves.size() );
             getServletContext().getRequestDispatcher("/vues/epreuve/listerEpreuve.jsp").forward(request, response);
         }

@@ -16,15 +16,19 @@ public class DaoEpreuve {
 
     public static ArrayList<Epreuve> getLesEpreuves(Connection cnx) {
         ArrayList<Epreuve> lesEpreuves = new ArrayList<>();
-        try {
-            requeteSql = cnx.prepareStatement("select * from epreuve");
-            resultatRequete = requeteSql.executeQuery();
+
+        String sql = "SELECT e.id AS id, e.nom AS epreuve_nom, s.nom AS sport_nom " +
+                "FROM epreuve AS e " +
+                "INNER JOIN sport AS s ON e.sport_id = s.id";
+
+        try (PreparedStatement requeteSql = cnx.prepareStatement(sql);
+             ResultSet resultatRequete = requeteSql.executeQuery()) {
 
             while (resultatRequete.next()) {
                 Epreuve e = new Epreuve();
 
                 e.setId(resultatRequete.getInt("id"));
-                e.setNom(resultatRequete.getString("nom"));
+                e.setNom(resultatRequete.getString("epreuve_nom"));
 
                 lesEpreuves.add(e);
             }
