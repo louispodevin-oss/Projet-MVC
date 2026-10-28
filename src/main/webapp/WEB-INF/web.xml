@@ -7,6 +7,15 @@
     </listener> 
     
     <servlet>
+        <servlet-name>ServletEpreuve</servlet-name>
+        <servlet-class>sio.la2028.servlet.ServletEpreuve</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ServletEpreuve</servlet-name>
+        <url-pattern>/ServletEpreuve/lister</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
         <servlet-name>ServletAthlete</servlet-name>
         <servlet-class>sio.la2028.servlet.ServletAthlete</servlet-class>
     </servlet>

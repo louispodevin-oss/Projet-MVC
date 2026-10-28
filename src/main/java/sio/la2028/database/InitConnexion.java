@@ -33,10 +33,10 @@ public class InitConnexion  implements ServletContextListener {
             try
             {
             //obtention de la connexion
-            cnx = DriverManager.getConnection("jdbc:mariadb://127.0.0.1:3306/la2028", "root", "password");
+            cnx = DriverManager.getConnection("jdbc:mariadb://127.0.0.1:3306/la2028?allowPublicKeyRetrieval=true&useSSL=false", "root", "password");
                 //sauvegarder la connexion dans le context
                 servletContext.setAttribute("connection",cnx);
-            System.out.println("Connexion opérationnelle" + "jdbc:mariadb://127.0.0.1:3306/la2028");
+            System.out.println("Connexion opérationnelle" + "jdbc:mariadb://127.0.0.1:3306/la2028?allowPublicKeyRetrieval=true&useSSL=false");
         }
         catch (SQLException e)
         {

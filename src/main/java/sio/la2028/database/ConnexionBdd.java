@@ -31,7 +31,7 @@ public class ConnexionBdd {
         }     
         try {
             //obtention de la connexion
-            connection= DriverManager.getConnection("jdbc:mariadb://127.0.0.1:3307/la2028","root","");
+            connection= DriverManager.getConnection("jdbc:mariadb://127.0.0.1:3306/la2028?allowPublicKeyRetrieval=true&useSSL=false","root","password");
             System.out.println("Connexion OK");
            
         } catch (SQLException e) {

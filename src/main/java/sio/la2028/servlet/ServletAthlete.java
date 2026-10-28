@@ -37,9 +37,13 @@ public class ServletAthlete extends HttpServlet {
         
         System.out.println("SERVLKET CONTEXT=" + servletContext.getContextPath());
         cnx = (Connection)servletContext.getAttribute("connection"); 
-        
+
+        System.out.println(cnx);
+
         try {
             System.out.println("INIT SERVLET=" + cnx.getSchema());
+            System.out.println("Base de données = " + cnx.getCatalog());
+            System.out.println("Utilisateur = " + cnx.getMetaData().getUserName());
         } catch (SQLException ex) {
             Logger.getLogger(ServletAthlete.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -87,7 +91,7 @@ public class ServletAthlete extends HttpServlet {
         String url = request.getRequestURI();  
        
         // Récup et affichage les athletes 
-        if(url.equals("/la2028/ServletAthlete/lister"))
+        if(url.equals("/la2028_war/ServletAthlete/lister"))
         {              
             ArrayList<Athlete> lesAthletes = DaoAthlete.getLesAthletes(cnx);
             request.setAttribute("pLesAthletes", lesAthletes);
@@ -95,7 +99,7 @@ public class ServletAthlete extends HttpServlet {
            getServletContext().getRequestDispatcher("/vues/athlete/listerAthletes.jsp").forward(request, response);
         }
         
-        if(url.equals("/la2028/ServletAthlete/consulter"))
+        if(url.equals("/la2028_war/ServletAthlete/consulter"))
         { 
             int idAthlete = Integer.parseInt((String)request.getParameter("idAthlete"));
             Athlete a = DaoAthlete.getAthleteById(cnx, idAthlete);
@@ -104,7 +108,7 @@ public class ServletAthlete extends HttpServlet {
            getServletContext().getRequestDispatcher("/vues/athlete/consulterAthlete.jsp").forward(request, response);
         }
         
-          if(url.equals("/la2028/ServletAthlete/ajouter"))
+          if(url.equals("/la2028_war/ServletAthlete/ajouter"))
         {                   
             ArrayList<Pays> lesPays = DaoPays.getLesPays(cnx);
             request.setAttribute("pLesPays", lesPays);

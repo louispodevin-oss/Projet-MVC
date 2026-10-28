@@ -4,10 +4,8 @@
  */
 package sio.la2028.database;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import sio.la2028.model.Athlete;
 import sio.la2028.model.Pays;
@@ -26,9 +24,16 @@ public class DaoAthlete {
         
         ArrayList<Athlete> lesAthletes = new ArrayList<Athlete>();
         try{
-            requeteSql = cnx.prepareStatement("select a.id as a_id, a.nom as a_nom,  p.id as p_id, p.nom as p_nom " +
-                         " from athlete a inner join pays p " +
-                         " on a.pays_id = p.id ");
+            requeteSql = cnx.prepareStatement(
+                    "SELECT a.id AS a_id, " +
+                            "a.nom AS a_nom, " +
+                            "a.prenom AS a_prenom, " +
+                            "a.date_naissance AS a_date_naissance, " +
+                            "p.id AS p_id, " +
+                            "p.nom AS p_nom " +
+                            "FROM athlete a INNER JOIN pays p " +
+                            "ON a.pays_id = p.id"
+            );
             //System.out.println("REQ="+ requeteSql);
             resultatRequete = requeteSql.executeQuery();
             
@@ -37,8 +42,15 @@ public class DaoAthlete {
                 Athlete a = new Athlete();
                    a.setId(resultatRequete.getInt("a_id"));
                    a.setNom(resultatRequete.getString("a_nom"));
-                    
-                   Pays p = new Pays();
+                   a.setPrenom(resultatRequete.getString("a_prenom"));
+                   Date dateSql = resultatRequete.getDate("a_date_naissance");
+
+                   if (dateSql != null) {
+                       LocalDateTime dateNaissance = dateSql.toLocalDate().atStartOfDay();
+                       a.setDataNaissance(dateNaissance);
+                   }
+
+                Pays p = new Pays();
                    p.setId(resultatRequete.getInt("p_id"));
                    p.setNom(resultatRequete.getString("p_nom"));
                 
