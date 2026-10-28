@@ -20,11 +20,20 @@
         
             <%
                 FormAthlete form = (FormAthlete)request.getAttribute("form");
+                Athlete athlete = (Athlete)request.getAttribute("pAthlete");
             %>
         
         <form class="form-inline" action="ajouter" method="POST">
                 <label for="nom">NOM : </label>
                 <input id="nom" type="text" name="nom"  size="30" maxlength="30">
+                </br>
+
+                <label for="rang">Rang (1 = meilleur) : </label>
+                <input id="rang" type="number" name="rang" min="1" step="1" required
+                       value="<%= athlete != null && athlete.getRang() != null ? athlete.getRang() : "" %>">
+                <% if (form != null && form.getErreurs().containsKey("rang")) { %>
+                    <span><%= form.getErreurs().get("rang") %></span>
+                <% } %>
                 </br>
                             
                 <%-- Champ Liste des pays --%>

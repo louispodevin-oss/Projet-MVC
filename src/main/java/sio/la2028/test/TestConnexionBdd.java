@@ -5,6 +5,7 @@
 package sio.la2028.test;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import sio.la2028.database.ConnexionBdd;
 import sio.la2028.database.DaoAthlete;
 import sio.la2028.model.Athlete;
@@ -14,7 +15,7 @@ import sio.la2028.model.Athlete;
  * @author zakina
  */
 public class TestConnexionBdd {
-      public static void main (String args[]){
+      public static void main (String args[]) throws SQLException {
         
         Connection cnx = ConnexionBdd.ouvrirConnexion();
         System.out.println ("nombre d athletes=" + DaoAthlete.getLesAthletes(cnx).size());

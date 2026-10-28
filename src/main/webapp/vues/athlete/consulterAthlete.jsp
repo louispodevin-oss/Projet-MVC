@@ -32,5 +32,8 @@
             <tr>
                 <td>Pays : </td><td><%  out.println(a.getPays().getNom());%></td>
             </tr>
+            <tr>
+                <td>Rang : </td><td><% out.println(a.getRang() == null ? "Non classé" : a.getRang()); %></td>
+            </tr>
         </table>
 </html>

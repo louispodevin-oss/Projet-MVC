@@ -20,7 +20,6 @@ import sio.la2028.database.DaoAthlete;
 import sio.la2028.database.DaoPays;
 import sio.la2028.form.FormAthlete;
 import sio.la2028.model.Athlete;
-import sio.la2028.model.Pays;
 
 /**
  *
@@ -87,35 +86,37 @@ public class ServletAthlete extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        String url = request.getRequestURI();  
-       
-        // Récup et affichage les athletes 
-        if(url.equals("/la2028_war/ServletAthlete/lister"))
-        {              
-            ArrayList<Athlete> lesAthletes = DaoAthlete.getLesAthletes(cnx);
-            request.setAttribute("pLesAthletes", lesAthletes);
-            //System.out.println("lister eleves - nombres d'élèves récupérés" + lesEleves.size() );
-           getServletContext().getRequestDispatcher("/vues/athlete/listerAthletes.jsp").forward(request, response);
+        String path = request.getServletPath();
+        try {
+            if ("/ServletAthlete/lister".equals(path)) {
+                ArrayList<Athlete> lesAthletes = DaoAthlete.getLesAthletes(cnx);
+                request.setAttribute("pLesAthletes", lesAthletes);
+                getServletContext().getRequestDispatcher("/vues/athlete/listerAthletes.jsp").forward(request, response);
+            } else if ("/ServletAthlete/consulter".equals(path)) {
+                int idAthlete = Integer.parseInt(request.getParameter("idAthlete"));
+                Athlete athlete = DaoAthlete.getAthleteById(cnx, idAthlete);
+                if (athlete == null) {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
+                request.setAttribute("pAthlete", athlete);
+                getServletContext().getRequestDispatcher("/vues/athlete/consulterAthlete.jsp").forward(request, response);
+            } else if ("/ServletAthlete/ajouter".equals(path)) {
+                afficherFormulaireAjout(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            }
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Identifiant d'athlète invalide.");
+        } catch (SQLException e) {
+            throw new ServletException("Impossible de récupérer les données des athlètes.", e);
         }
-        
-        if(url.equals("/la2028_war/ServletAthlete/consulter"))
-        { 
-            int idAthlete = Integer.parseInt((String)request.getParameter("idAthlete"));
-            Athlete a = DaoAthlete.getAthleteById(cnx, idAthlete);
-            request.setAttribute("pAthlete", a);
-            //System.out.println("lister eleves - nombres d'élèves récupérés" + lesEleves.size() );
-           getServletContext().getRequestDispatcher("/vues/athlete/consulterAthlete.jsp").forward(request, response);
-        }
-        
-          if(url.equals("/la2028_war/ServletAthlete/ajouter"))
-        {                   
-            ArrayList<Pays> lesPays = DaoPays.getLesPays(cnx);
-            request.setAttribute("pLesPays", lesPays);
-            this.getServletContext().getRequestDispatcher("/vues/athlete/ajouterAthlete.jsp" ).forward( request, response );
-        }
-        
-        
+    }
+
+    private void afficherFormulaireAjout(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, ServletException, IOException {
+        request.setAttribute("pLesPays", DaoPays.getLesPays(cnx));
+        getServletContext().getRequestDispatcher("/vues/athlete/ajouterAthlete.jsp").forward(request, response);
     }
 
     /**
@@ -129,44 +130,56 @@ public class ServletAthlete extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-             
-        
-         FormAthlete form = new FormAthlete();
-		
-        /* Appel au traitement et à la validation de la requête, et récupération du bean en résultant */
-        Athlete ath = form.ajouterAthlete(request);
-        
-        /* Stockage du formulaire et de l'objet dans l'objet request */
-        request.setAttribute( "form", form );
-        request.setAttribute( "pAthlete", ath );
-		
-        if (form.getErreurs().isEmpty()){
-            Athlete athleteInsere =  DaoAthlete.addAthlete(cnx, ath);
-            if (athleteInsere != null ){
-                request.setAttribute( "pAthlete", athleteInsere );
-                this.getServletContext().getRequestDispatcher("/vues/athlete/consulterAthlete.jsp" ).forward( request, response );
-            }
-            else 
-            {
-                // Cas oùl'insertion en bdd a échoué
-                //renvoyer vers une page d'erreur 
-            }
-           
+        String path = request.getServletPath();
+        if ("/ServletAthlete/classer".equals(path)) {
+            modifierRang(request, response);
+        } else if ("/ServletAthlete/ajouter".equals(path)) {
+            ajouterAthlete(request, response);
+        } else {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
-        else
-        { 
-            // il y a des erreurs. On réaffiche le formulaire avec des messages d'erreurs
-            ArrayList<Pays> lesCasernes = DaoPays.getLesPays(cnx);
-            request.setAttribute("pLesPays", lesCasernes);
-            this.getServletContext().getRequestDispatcher("/vues/athlete/ajouterAthlete.jsp" ).forward( request, response );
+    }
+
+    private void modifierRang(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        try {
+            int idAthlete = Integer.parseInt(request.getParameter("idAthlete"));
+            int rang = Integer.parseInt(request.getParameter("rang"));
+            if (idAthlete < 1 || rang < 1) {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "L'identifiant et le rang doivent être positifs.");
+                return;
+            }
+            DaoAthlete.modifierRang(cnx, idAthlete, rang);
+            response.sendRedirect(request.getContextPath() + "/ServletAthlete/lister");
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Identifiant ou rang invalide.");
+        } catch (SQLException e) {
+            throw new ServletException("Impossible de modifier le rang de l'athlète.", e);
         }
-        
-        
-        
-        
-        
-        
-        
+    }
+
+    private void ajouterAthlete(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        FormAthlete form = new FormAthlete();
+        Athlete athlete = form.ajouterAthlete(request);
+        request.setAttribute("form", form);
+        request.setAttribute("pAthlete", athlete);
+
+        try {
+            if (!form.getErreurs().isEmpty()) {
+                request.setAttribute("pLesPays", DaoPays.getLesPays(cnx));
+                getServletContext().getRequestDispatcher("/vues/athlete/ajouterAthlete.jsp").forward(request, response);
+                return;
+            }
+            Athlete athleteInsere = DaoAthlete.addAthlete(cnx, athlete);
+            if (athleteInsere == null) {
+                throw new ServletException("L'athlète enregistré est introuvable.");
+            }
+            request.setAttribute("pAthlete", athleteInsere);
+            getServletContext().getRequestDispatcher("/vues/athlete/consulterAthlete.jsp").forward(request, response);
+        } catch (SQLException e) {
+            throw new ServletException("Impossible d'enregistrer l'athlète.", e);
+        }
     }
 
     /**

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package sio.la2028.database;
 
 import jakarta.servlet.ServletContext;
@@ -11,72 +7,43 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- *
- * @author zakina
- */
-public class InitConnexion  implements ServletContextListener {
-    
-     Connection cnx = null;
-    
-    public void contextInitialized(ServletContextEvent event)
-    {     
-        //Initialisation et lecture du  contexte
-        ServletContext servletContext=event.getServletContext();
-        System.out.println("INITCONNEXION" + servletContext.getContextPath());
-        try
-        {
-            //chargement du driver
-            Class.forName("org.mariadb.jdbc.Driver");
-            System.out.println("Pilote Mariadb JDBC chargé");
-            
-            try
-            {
-            //obtention de la connexion
-            cnx = DriverManager.getConnection("jdbc:mariadb://127.0.0.1:3306/la2028?allowPublicKeyRetrieval=true&useSSL=false", "root", "password");
-                //sauvegarder la connexion dans le context
-                servletContext.setAttribute("connection",cnx);
-            System.out.println("Connexion opérationnelle" + "jdbc:mariadb://127.0.0.1:3306/la2028?allowPublicKeyRetrieval=true&useSSL=false");
-        }
-        catch (SQLException e)
-        {
-            e.printStackTrace();
-            System.out.println("Erreur lors de l’établissementde la connexion");
-        }
-        }
-        catch (ClassNotFoundException e) 
-        {
-            e.printStackTrace();
-            System.out.println("Erreur lors du chargemement du pilote");
-        }
+public class InitConnexion implements ServletContextListener {
+    private Connection cnx;
 
-        
+    @Override
+    public void contextInitialized(ServletContextEvent event) {
+        ServletContext context = event.getServletContext();
+        String url = System.getenv().getOrDefault(
+                "LA2028_DB_URL",
+                "jdbc:mariadb://127.0.0.1:3306/la2028?allowPublicKeyRetrieval=true&useSSL=false");
+        String user = System.getenv().getOrDefault("LA2028_DB_USER", "root");
+        String password = System.getenv().getOrDefault("LA2028_DB_PASSWORD", "password");
+
+        try {
+            if (url.startsWith("jdbc:h2:")) {
+                Class.forName("org.h2.Driver");
+            } else {
+                Class.forName("org.mariadb.jdbc.Driver");
+            }
+            cnx = DriverManager.getConnection(url, user, password);
+            if (url.startsWith("jdbc:h2:")) {
+                DemoDatabase.initialize(cnx);
+            }
+            context.setAttribute("connection", cnx);
+            context.log("Connexion à la base de données établie.");
+        } catch (ClassNotFoundException | SQLException e) {
+            throw new IllegalStateException("Impossible de se connecter à la base de données.", e);
+        }
     }
 
-    //action qui permet de détruire le filtre
-    public void contextDestroyed(ServletContextEvent event)
-    {
-        System.out.println("----------- Contexte détruit -----------");
-        try
-        {
-            //fermeture
-            System.out.println("Connexion fermée");
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        finally
-        {
-            try
-            {
+    @Override
+    public void contextDestroyed(ServletContextEvent event) {
+        if (cnx != null) {
+            try {
                 cnx.close();
-            }
-            catch(Exception e)
-            {
-                System.out.println("Erreur lors de la fermeture d’une connexion ");
+            } catch (SQLException e) {
+                event.getServletContext().log("Impossible de fermer la connexion à la base de données.", e);
             }
         }
     }
-    
 }

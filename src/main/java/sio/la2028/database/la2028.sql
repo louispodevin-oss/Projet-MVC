@@ -30,8 +30,16 @@ SET time_zone = "+00:00";
 CREATE TABLE `athlete` (
   `id` int(11) NOT NULL,
   `nom` varchar(50) NOT NULL,
+  `prenom` varchar(50) DEFAULT NULL,
+  `date_naissance` date DEFAULT NULL,
+  `rang` int(11) DEFAULT NULL,
   `pays_id` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Ajoute également les colonnes aux bases existantes.
+ALTER TABLE `athlete` ADD COLUMN IF NOT EXISTS `prenom` varchar(50) DEFAULT NULL;
+ALTER TABLE `athlete` ADD COLUMN IF NOT EXISTS `date_naissance` date DEFAULT NULL;
+ALTER TABLE `athlete` ADD COLUMN IF NOT EXISTS `rang` int(11) DEFAULT NULL;
 
 --
 -- Déchargement des données de la table `athlete`

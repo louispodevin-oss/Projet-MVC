@@ -20,6 +20,7 @@ public class Athlete {
     private LocalDateTime dataNaissance;
     private String prenom;
     private List<Epreuve> epreuves;
+    private Integer rang;
 
     public Athlete() {
     }
@@ -76,5 +77,13 @@ public class Athlete {
 
     public void setPrenom(String prenom) {
         this.prenom = prenom;
+    }
+
+    public Integer getRang() {
+        return rang;
+    }
+
+    public void setRang(Integer rang) {
+        this.rang = rang;
     }
 }

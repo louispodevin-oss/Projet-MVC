@@ -31,6 +31,10 @@
         <servlet-name>ServletAthlete</servlet-name>
         <url-pattern>/ServletAthlete/ajouter</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ServletAthlete</servlet-name>
+        <url-pattern>/ServletAthlete/classer</url-pattern>
+    </servlet-mapping>
     <session-config>
         <session-timeout>
             30

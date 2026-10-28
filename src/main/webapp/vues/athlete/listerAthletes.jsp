@@ -42,6 +42,7 @@
     <body>
        <div class="container special">
             <h2 class="h2">Liste des athlètes</h2>
+            <p>Renseigne le rang de chaque athlète (1 = meilleur), puis clique sur « Enregistrer ». La liste se réordonne automatiquement.</p>
 		<div class="table-responsive">
                 <%
                     ArrayList<Athlete> lesAthletes = (ArrayList)request.getAttribute("pLesAthletes");
@@ -54,11 +55,11 @@
                         <th>prenom</th>
                         <th>pays</th>
                         <th>date de naissance</th>
+                        <th>rang (1 = meilleur)</th>
 
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
                         <%
                             for (Athlete a : lesAthletes)
                             {              
@@ -83,9 +84,17 @@
                                 out.println(a.getDataNaissance().format(formatFr));
                                 out.println("</td>");
 
+                                out.println("<td>");
+                                out.println("<form action='../ServletAthlete/classer' method='POST'>");
+                                out.println("<input type='hidden' name='idAthlete' value='" + a.getId() + "'>");
+                                out.println("<input type='number' name='rang' min='1' step='1' required value='" +
+                                        (a.getRang() == null ? "" : a.getRang()) + "'>");
+                                out.println("<button type='submit'>Enregistrer</button>");
+                                out.println("</form>");
+                                out.println("</td></tr>");
+
                             }
                         %>
-                    </tr>
                 </tbody>
             </table>
         </body>

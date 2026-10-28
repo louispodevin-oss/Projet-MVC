@@ -4,8 +4,12 @@
  */
 package sio.la2028.database;
 
-import java.sql.*;
-import java.time.LocalDateTime;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import sio.la2028.model.Athlete;
 import sio.la2028.model.Pays;
@@ -16,124 +20,79 @@ import sio.la2028.model.Pays;
  */
 public class DaoAthlete {
     
-    Connection cnx;
-    static PreparedStatement requeteSql = null;
-    static ResultSet resultatRequete = null;
-    
-    public static ArrayList<Athlete> getLesAthletes(Connection cnx){
-        
-        ArrayList<Athlete> lesAthletes = new ArrayList<Athlete>();
-        try{
-            requeteSql = cnx.prepareStatement(
-                    "SELECT a.id AS a_id, " +
-                            "a.nom AS a_nom, " +
-                            "a.prenom AS a_prenom, " +
-                            "a.date_naissance AS a_date_naissance, " +
-                            "p.id AS p_id, " +
-                            "p.nom AS p_nom " +
-                            "FROM athlete a INNER JOIN pays p " +
-                            "ON a.pays_id = p.id"
-            );
-            //System.out.println("REQ="+ requeteSql);
-            resultatRequete = requeteSql.executeQuery();
-            
-            while (resultatRequete.next()){
-                
-                Athlete a = new Athlete();
-                   a.setId(resultatRequete.getInt("a_id"));
-                   a.setNom(resultatRequete.getString("a_nom"));
-                   a.setPrenom(resultatRequete.getString("a_prenom"));
-                   Date dateSql = resultatRequete.getDate("a_date_naissance");
+    private static final String SELECT_ATHLETE =
+            "SELECT a.id AS a_id, a.nom AS a_nom, a.prenom AS a_prenom, " +
+            "a.date_naissance AS a_date_naissance, a.rang AS a_rang, " +
+            "p.id AS p_id, p.nom AS p_nom " +
+            "FROM athlete a INNER JOIN pays p ON a.pays_id = p.id";
 
-                   if (dateSql != null) {
-                       LocalDateTime dateNaissance = dateSql.toLocalDate().atStartOfDay();
-                       a.setDataNaissance(dateNaissance);
-                   }
-
-                Pays p = new Pays();
-                   p.setId(resultatRequete.getInt("p_id"));
-                   p.setNom(resultatRequete.getString("p_nom"));
-                
-                    a.setPays(p);
-                
-                lesAthletes.add(a);
+    public static ArrayList<Athlete> getLesAthletes(Connection cnx) throws SQLException {
+        ArrayList<Athlete> lesAthletes = new ArrayList<>();
+        String sql = SELECT_ATHLETE +
+                " ORDER BY CASE WHEN a.rang IS NULL THEN 1 ELSE 0 END, a.rang, a.nom";
+        try (PreparedStatement requete = cnx.prepareStatement(sql);
+             ResultSet resultat = requete.executeQuery()) {
+            while (resultat.next()) {
+                lesAthletes.add(lireAthlete(resultat));
             }
-           
-        }
-        catch (SQLException e){
-            e.printStackTrace();
-            System.out.println("La requête de getLesPompiers e généré une erreur");
         }
         return lesAthletes;
     }
-    
-    public static Athlete getAthleteById(Connection cnx, int idAthlete){
-        
-        Athlete a = new Athlete();
-        try{
-            requeteSql = cnx.prepareStatement("select a.id as a_id, a.nom as a_nom,  p.id as p_id, p.nom as p_nom " +
-                         " from athlete a inner join pays p " +
-                         " on a.pays_id = p.id " + 
-                         " where a.id = ? ");
-            //System.out.println("REQ="+ requeteSql);
-            requeteSql.setInt(1, idAthlete);
-            resultatRequete = requeteSql.executeQuery();
-            
-            if (resultatRequete.next()){
-                
-                   a.setId(resultatRequete.getInt("a_id"));
-                   a.setNom(resultatRequete.getString("a_nom"));
-                    
-                   Pays p = new Pays();
-                   p.setId(resultatRequete.getInt("p_id"));
-                   p.setNom(resultatRequete.getString("p_nom"));
-                
-                    a.setPays(p);
-                
-            }
-           
-        }
-        catch (SQLException e){
-            e.printStackTrace();
-            System.out.println("La requête de getLesPompiers e généré une erreur");
-        }
-        return a;
-    }
-    
-     public static Athlete addAthlete(Connection connection, Athlete ath){      
-        int idGenere = -1;
-        try
-        {
-            //preparation de la requete
-            // id (clé primaire de la table athlete) est en auto_increment,donc on ne renseigne pas cette valeur
-            // la paramètre RETURN_GENERATED_KEYS est ajouté à la requête afin de pouvoir récupérer l'id généré par la bdd (voir ci-dessous)
-            // supprimer ce paramètre en cas de requête sans auto_increment.
-            requeteSql=connection.prepareStatement("INSERT INTO athlete (nom, pays_id)\n" +
-                    "VALUES (?,?)", requeteSql.RETURN_GENERATED_KEYS );
-            requeteSql.setString(1, ath.getNom());      
-            requeteSql.setInt(2, ath.getPays().getId());
 
-           /* Exécution de la requête */
-            requeteSql.executeUpdate();
-            
-             // Récupération de id auto-généré par la bdd dans la table client
-            resultatRequete = requeteSql.getGeneratedKeys();
-            while ( resultatRequete.next() ) {
-                idGenere = resultatRequete.getInt( 1 );
-                ath.setId(idGenere);
-                
-                ath = DaoAthlete.getAthleteById(connection, ath.getId());
+    public static Athlete getAthleteById(Connection cnx, int idAthlete) throws SQLException {
+        try (PreparedStatement requete = cnx.prepareStatement(SELECT_ATHLETE + " WHERE a.id = ?")) {
+            requete.setInt(1, idAthlete);
+            try (ResultSet resultat = requete.executeQuery()) {
+                return resultat.next() ? lireAthlete(resultat) : null;
             }
-            
-         
-        }   
-        catch (SQLException e) 
-        {
-            e.printStackTrace();
-            //out.println("Erreur lors de l’établissement de la connexion");
         }
-        return ath ;    
     }
-    
-    
+
+    public static Athlete addAthlete(Connection cnx, Athlete athlete) throws SQLException {
+        String sql = "INSERT INTO athlete (nom, pays_id, rang) VALUES (?, ?, ?)";
+        int idGenere;
+        try (PreparedStatement requete = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            requete.setString(1, athlete.getNom());
+            requete.setInt(2, athlete.getPays().getId());
+            requete.setInt(3, athlete.getRang());
+            requete.executeUpdate();
+            try (ResultSet keys = requete.getGeneratedKeys()) {
+                if (!keys.next()) {
+                    throw new SQLException("La base n'a pas renvoyé l'identifiant de l'athlète créé.");
+                }
+                idGenere = keys.getInt(1);
+            }
+        }
+        return getAthleteById(cnx, idGenere);
+    }
+
+    public static void modifierRang(Connection cnx, int idAthlete, int rang) throws SQLException {
+        try (PreparedStatement requete = cnx.prepareStatement(
+                "UPDATE athlete SET rang = ? WHERE id = ?")) {
+            requete.setInt(1, rang);
+            requete.setInt(2, idAthlete);
+            if (requete.executeUpdate() == 0) {
+                throw new SQLException("Aucun athlète trouvé pour l'identifiant " + idAthlete + ".");
+            }
+        }
+    }
+
+    private static Athlete lireAthlete(ResultSet resultat) throws SQLException {
+        Athlete athlete = new Athlete();
+        athlete.setId(resultat.getInt("a_id"));
+        athlete.setNom(resultat.getString("a_nom"));
+        athlete.setPrenom(resultat.getString("a_prenom"));
+        Date dateNaissance = resultat.getDate("a_date_naissance");
+        if (dateNaissance != null) {
+            athlete.setDataNaissance(dateNaissance.toLocalDate().atStartOfDay());
+        }
+        int rang = resultat.getInt("a_rang");
+        athlete.setRang(resultat.wasNull() ? null : rang);
+
+        Pays pays = new Pays();
+        pays.setId(resultat.getInt("p_id"));
+        pays.setNom(resultat.getString("p_nom"));
+        athlete.setPays(pays);
+        return athlete;
+    }
 }

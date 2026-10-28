@@ -61,15 +61,36 @@ public class FormAthlete {
         Athlete ath  = new Athlete();
          
         String nom = getDataForm( request, "nom" );
-        int idPays = Integer.parseInt((String)getDataForm( request, "idPays" ));
-       
-      
+        String idPaysForm = getDataForm(request, "idPays");
+        String rangForm = getDataForm(request, "rang");
+
         try {
              validationNom( nom );
         } catch ( Exception e ) {
             setErreur( "nom", e.getMessage() );
         }
         ath.setNom(nom);
+
+        try {
+            int rang = Integer.parseInt(rangForm);
+            if (rang < 1) {
+                setErreur("rang", "Le rang doit être supérieur ou égal à 1.");
+            } else {
+                ath.setRang(rang);
+            }
+        } catch (NumberFormatException e) {
+            setErreur("rang", "Veuillez saisir un rang entier supérieur ou égal à 1.");
+        }
+
+        int idPays = 0;
+        try {
+            idPays = Integer.parseInt(idPaysForm);
+            if (idPays < 1) {
+                setErreur("idPays", "Veuillez sélectionner un pays valide.");
+            }
+        } catch (NumberFormatException e) {
+            setErreur("idPays", "Veuillez sélectionner un pays.");
+        }
 
         if ( erreurs.isEmpty() ) {
             resultat = "Succès de l'ajout.";
